@@ -7,8 +7,6 @@ import kr.inmc.core.rank.RankBoard
 import kr.inmc.core.rank.RankMode
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.util.UUID
 
 /**
@@ -76,12 +74,7 @@ class Records(private val d: Dungeons) {
         }
         val text = yaml.saveToString()
         val target = file
-        d.io.asyncRun {
-            target.parentFile.mkdirs()
-            val temp = File(target.parentFile, target.name + ".tmp")
-            temp.writeText(text, Charsets.UTF_8)
-            Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-        }
+        d.io.asyncRun { kr.inmc.core.util.AtomicFiles.write(target, text) }
     }
 
     /** id 는 `[a-z0-9_-]` 라 `/`·`.` 이 들어가지 않는다(YAML 경로로 그대로 써도 된다). */

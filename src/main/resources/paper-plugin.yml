@@ -12,6 +12,8 @@ dependencies:
     inmc-core:     { load: BEFORE, required: true, join-classpath: true }
     inmc-monster:  { load: BEFORE, required: true, join-classpath: true }
     WorldEdit:     { load: BEFORE, required: true, join-classpath: true }
+    # 던전 월드는 켤 때 우리가 만든다 — MV-Inv 가 그 뒤에 켜져야 인벤 그룹의 `inmc_dungeon` 을 "없는 월드" 로 경고하지 않는다.
+    Multiverse-Inventories: { load: AFTER, required: false }
 
 # commands 절은 paper-plugin.yml 에 없다 - Brigadier 로 등록한다.
 

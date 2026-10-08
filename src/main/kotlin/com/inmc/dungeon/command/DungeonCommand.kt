@@ -46,6 +46,12 @@ class DungeonCommand(private val d: Dungeons, private val plugin: DungeonPlugin)
 
     private fun isAdmin(source: CommandSourceStack): Boolean = source.sender.hasPermission(Dungeons.ADMIN)
 
+    /** 도움말 — 관리자 줄은 권한이 있을 때만(2026-10-08). */
+    private fun help(sender: CommandSender) {
+        d.messages.send(sender, "help")
+        if (sender.hasPermission(Dungeons.ADMIN)) d.messages.send(sender, "help-admin")
+    }
+
     private val dungeonIds = SuggestionProvider<CommandSourceStack> { _, builder ->
         d.library.dungeons.keys.forEach(builder::suggest)
         builder.buildFuture()
@@ -67,10 +73,10 @@ class DungeonCommand(private val d: Dungeons, private val plugin: DungeonPlugin)
             .executes { ctx ->
                 val player = ctx.source.executor as? Player ?: ctx.source.sender as? Player
                 val lobby = player?.let { d.lobbies.of(it.uniqueId) }
-                if (player != null && lobby != null) LobbyMenu(d, player, lobby.id).show() else d.messages.send(sender(ctx), "help")
+                if (player != null && lobby != null) LobbyMenu(d, player, lobby.id).show() else help(sender(ctx))
                 1
             }
-            .then(Commands.literal("도움말").executes { ctx -> d.messages.send(sender(ctx), "help"); 1 })
+            .then(Commands.literal("도움말").executes { ctx -> help(sender(ctx)); 1 })
             .then(party())
             .then(
                 Commands.literal("순위")
@@ -96,7 +102,8 @@ class DungeonCommand(private val d: Dungeons, private val plugin: DungeonPlugin)
 
     private fun admin(): LiteralArgumentBuilder<CommandSourceStack> =
         Commands.literal("관리").requires(::isAdmin)
-            .executes { ctx -> d.messages.send(sender(ctx), "help"); 1 }
+            .executes { ctx -> help(sender(ctx)); 1 }
+            .then(Commands.literal("화면").executes { ctx -> player(ctx)?.let { com.inmc.dungeon.gui.AdminMenu(d, it).show() }; 1 })
             .then(
                 Commands.literal("시작").then(
                     Commands.argument("던전", StringArgumentType.word()).suggests(dungeonIds).then(

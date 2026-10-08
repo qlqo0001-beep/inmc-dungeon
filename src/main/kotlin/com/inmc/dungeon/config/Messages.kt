@@ -194,6 +194,10 @@ class Messages(values: Map<String, String>) : MessageCatalog<Ph>(values, DEFAULT
                 "<gold>/던전</gold> <gray>- 내 파티 화면</gray> <dark_gray>·</dark_gray> <gold>/던전 파티 초대·모집·입장·나가기·추방</gold>",
                 "<gold>/던전 나가기</gold> <gray>- 던전에서 나오기</gray>",
                 "<gold>/던전 순위 [던전] [난이도]</gold> <gray>- 최단 클리어 순위</gray>",
+            ).joinToString("\n"),
+            // 관리자 줄은 권한이 있을 때만 보낸다(2026-10-08) — 일반 플레이어에게 열 줄짜리 관리 명령이 보였다.
+            "help-admin" to listOf(
+                "<red>/던전 관리 화면</red> <gray>- 관리 화면(열린 판·던전·방 붙여 보기·검증·리로드)</gray>",
                 "<red>/던전 관리 시작 <던전> <난이도> [시드]</red> <gray>- 바로 시작(시험)</gray>",
                 "<red>/던전 관리 목록 · 끝내기 [판] · 클리어 · 다음 <방> · 투표 <번호> · 문 · 비밀 [찾기|숨김] · 시간 <초> · 부활 <수></red>",
                 "<red>/던전 관리 금화 <수> · 버프 <id> · 아이템 <참조> [수]</red> <gray>- 판 안에서 시험</gray>",

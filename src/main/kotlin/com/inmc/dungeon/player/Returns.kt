@@ -6,8 +6,6 @@ import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -87,10 +85,5 @@ class Returns(private val d: Dungeons) {
         File(dir, "$player.yml").delete()
     }
 
-    private fun writeAtomically(file: File, text: String) {
-        file.parentFile.mkdirs()
-        val temp = File(file.parentFile, file.name + ".tmp")
-        temp.writeText(text, Charsets.UTF_8)
-        Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-    }
+    private fun writeAtomically(file: File, text: String) = kr.inmc.core.util.AtomicFiles.write(file, text)
 }
