@@ -1,0 +1,42 @@
+# 판 동안만 붙는 축복·저주. 던전 정의의 blessings(축복방에서 셋 중 하나를 고름)·curses(저주방에서 하나가 붙음)·상점에서 id 로 씁니다.
+# 수치: attack(주는 피해) · defense(받는 피해 감소, 음수면 더 받음) · speed · attack-speed · reward(던전 장비 확률) = 비율(0.15 = 15%)
+#       max-health = 반 칸 단위(2 = 하트 하나)
+
+might:
+  name: '<red>힘의 축복</red>'
+  icon: blaze_powder
+  attack: 0.2
+guard:
+  name: '<aqua>수호의 축복</aqua>'
+  icon: shield
+  defense: 0.2
+swift:
+  name: '<white>바람의 축복</white>'
+  icon: feather
+  speed: 0.2
+  attack-speed: 0.1
+vitality:
+  name: '<green>생명의 축복</green>'
+  icon: golden_apple
+  max-health: 8
+fortune:
+  name: '<gold>행운의 축복</gold>'
+  icon: gold_nugget
+  reward: 0.5
+
+fragile:
+  name: '<dark_purple>저주: 유리 몸</dark_purple>'
+  icon: glass_pane
+  defense: -0.3
+weakened:
+  name: '<dark_purple>저주: 무력</dark_purple>'
+  icon: wooden_sword
+  attack: -0.25
+sluggish:
+  name: '<dark_purple>저주: 둔화</dark_purple>'
+  icon: cobweb
+  speed: -0.2
+withered:
+  name: '<dark_purple>저주: 시듦</dark_purple>'
+  icon: wither_rose
+  max-health: -6

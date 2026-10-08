@@ -1,0 +1,127 @@
+# 예시 던전. 방 풀 = rooms/ 에서 theme 이 'sample' 인 방 전부.
+# 방은 게임 안에서 짓고 `/던전 관리 방 저장 <id> <종류>` 로 저장한 뒤, rooms/<id>.yml 의 theme 을 sample 로 적으면 이 던전에 나옵니다.
+enabled: true
+name: '<green>시험의 회랑</green>'
+theme: sample
+description:
+  - '<gray>던전 기능을 시험하는 예시 던전입니다.</gray>'
+
+# 입장 화면
+icon: ender_eye
+estimated: '10~15분'
+rewards-text:
+  - '<gray>· 던전 보상 상자</gray>'
+
+# 필드 포탈 — 모양(portals/<id>.yml, 비우면 기본 모양) · 여러 던전 가운데 이 던전이 고를 가중치(0 = 필드에 안 나옴)
+portal: ''
+portal-weight: 10
+
+# 시작의 방과 보스방을 뺀 방 수(최소~최대). 최소를 지나면 보스방이 선택지에 섞여 나오고, 최대에서는 보스방만 나옵니다.
+length: 3~5
+
+# 다음 방 선택지로 나올 종류의 가중치(0 이면 안 나옴)
+weights:
+  combat: 50
+  elite: 15
+  event: 10
+  treasure: 8
+  shop: 5
+  rest: 6
+  blessing: 4
+  curse: 2
+
+# 한 판에 나올 수 있는 최대 수
+max-per-kind:
+  treasure: 1
+  shop: 1
+  rest: 2
+  secret: 1           # 비밀방(기본 1) — 가중치로는 안 나오고 아래 secret-chance · 방의 [비밀] 표지판으로만
+
+# 비밀방 — 선택지 하나가 "???"(정체를 숨긴 비밀방)로 바뀔 확률(%). 방에 숨긴 [비밀] 표지판을 누르면 네 번째 출구로도 열린다.
+# 풀(테마)에 비밀방(kind: secret)이 없으면 둘 다 안 나온다.
+secret-chance: 10.0
+
+# 정예방은 이 번째 방부터
+elite-from: 2
+
+# portal = 포탈이 난이도를 굴림 · choose = 입장 화면에서 파티장이 고름
+difficulty-mode: choose
+# choose 에서 깬 난이도의 다음 단계까지만 열기
+unlock: true
+
+difficulties:
+  normal:
+    name: '<green>노멀</green>'
+    order: 0
+    time-limit: 1200       # 초. 0 = 없음
+    revives: 5             # 파티가 함께 쓰는 부활 수
+    revive-delay: 10       # 쓰러진 뒤 부활까지(초)
+    mob-count: 1.0
+    mob-health: 1.0
+    mob-damage: 1.0
+    mob-taken: 1.0         # 몬스터가 받는 피해 배율
+    affixes: []            # 모든 몬스터에 붙일 몬스터 수식어 id
+    portal-weight: 60
+    reward-multiplier: 1.0
+  hard:
+    name: '<gold>하드</gold>'
+    order: 1
+    time-limit: 900
+    revives: 3
+    revive-delay: 15
+    mob-count: 1.3
+    mob-health: 1.5
+    mob-damage: 1.3
+    mob-taken: 0.9
+    affixes: []
+    portal-weight: 30
+    reward-multiplier: 1.5
+  hell:
+    name: '<dark_red>헬</dark_red>'
+    order: 2
+    time-limit: 600
+    revives: 1
+    revive-delay: 30
+    mob-count: 1.8
+    mob-health: 2.5
+    mob-damage: 2.0
+    mob-taken: 0.75
+    affixes: []
+    portal-weight: 10
+    reward-multiplier: 3.0
+
+# 보상 — 상자는 inmc-urb 의 상자 이름(열쇠 없이 그 표를 굴린다). 난이도마다 treasure-box·boss-box 로 바꿀 수 있다.
+rewards:
+  treasure: ''        # 보물방 상자
+  boss: ''            # 보스 보상 상자
+  secret: ''          # 비밀방 상자(비우면 보물방 상자)
+  # 던전 전용 장비 — 보스 상자를 열 때 사람마다 굴림(확률 × 난이도 보상 배율 × (1 + 저주 보너스 + 행운 축복))
+  gear: []
+  #  - { item: 'inmc:forest_sword', chance: 5.0 }
+
+# 판 금화(던전이 끝나면 사라짐) — 몬스터를 잡은 사람 · 싸운 방을 정리하면 모두
+gold:
+  per-kill: 2
+  per-room: 10
+
+# 상점방 — item(dungeon:revive · dungeon:revive_ticket · dungeon:party_heal · dungeon:cleanse · minecraft:… · inmc:…) 또는 buff(buffs.yml)
+shop:
+  - { item: 'dungeon:revive', price: 60 }
+  - { item: 'dungeon:revive_ticket', price: 40 }
+  - { item: 'dungeon:party_heal', price: 30 }
+  - { item: 'dungeon:cleanse', price: 25 }
+  - { item: 'minecraft:golden_apple', amount: 2, price: 20 }
+  - { buff: might, price: 45 }
+
+# 축복방에서 셋을 굴려 하나를 고름 · 저주방에서 하나가 붙음(buffs.yml id)
+blessings: [might, guard, swift, vitality, fortune]
+curses: [fragile, weakened, sluggish, withered]
+# 저주방 하나마다 이번 판의 보상(장비 확률)에 더하는 비율
+curse-reward: 0.3
+
+# 인원 보정 — 한 명 늘 때마다 몬스터 수·체력에 더하는 비율
+party:
+  min: 1
+  max: 4
+  count-per-extra: 0.3
+  health-per-extra: 0.25

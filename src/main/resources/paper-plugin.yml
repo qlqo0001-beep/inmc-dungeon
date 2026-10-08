@@ -1,0 +1,24 @@
+name: inmc-dungeon
+version: '${version}'
+main: com.inmc.dungeon.DungeonPlugin
+api-version: '${apiVersion}'   # build.gradle.kts 의 inmc { paper } 에서 유도됨
+description: INMC 로그라이크 던전 - 방을 골라 나아가는 인스턴스 던전(방 라이브러리·투표·공유 부활·제한시간)
+authors: [ INMC ]
+
+# 몬스터는 MonsterAPI 를 직접 부른다(던전용으로 만든 API). 몬스터는 우리를 모르므로 순환이 없다.
+# 방 저장·붙여넣기는 WorldEdit API — 테섭은 FastAsyncWorldEdit 이 `provides: [WorldEdit]` 로 이 이름을 채운다.
+dependencies:
+  server:
+    inmc-core:     { load: BEFORE, required: true, join-classpath: true }
+    inmc-monster:  { load: BEFORE, required: true, join-classpath: true }
+    WorldEdit:     { load: BEFORE, required: true, join-classpath: true }
+
+# commands 절은 paper-plugin.yml 에 없다 - Brigadier 로 등록한다.
+
+permissions:
+  inmcdungeon.admin:
+    description: 던전 관리 전체 (방 저장·던전 정의·시작·시험 도구·리로드·검증)
+    default: op
+  inmcdungeon.play:
+    description: 던전 들어가기·파티
+    default: true

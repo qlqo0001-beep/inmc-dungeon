@@ -1,0 +1,13 @@
+.gradle/
+.kotlin/
+build/
+# 루트에만 — 소스에 `run/` 패키지(com.inmc.dungeon.run)가 있다.
+/bin/
+/out/
+/run/
+.idea/
+*.iml
+.vscode/
+Thumbs.db
+desktop.ini
+.DS_Store

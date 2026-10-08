@@ -1,0 +1,55 @@
+# inmc-dungeon 설정. 던전·방 정의는 dungeons/·rooms/ 폴더에 따로 있습니다.
+
+world:
+  # 던전 월드 이름. 켤 때마다 이 폴더를 지우고 새로 만듭니다 — 판은 재시작을 넘어 이어지지 않고, 크러시 뒤 잔해도 남지 않습니다.
+  # 우리가 만든 표시 파일(inmc-dungeon-world.txt)이 있는 폴더만 지웁니다. 표시가 없는 같은 이름의 월드가 있으면 던전을 켜지 않습니다.
+  name: inmc_dungeon
+  # 방을 붙이는 높이
+  base-y: 100
+
+instances:
+  # 동시에 열 수 있는 판 수. 다 차면 새 판은 기다립니다
+  max-active: 10
+  # 판(칸)끼리의 거리(블록)
+  cell-spacing: 1024
+  # 한 판 안의 방 두 자리(지금 방·다음 방) 사이 거리(블록). 가장 큰 방보다 커야 합니다
+  slot-spacing: 256
+
+run:
+  # 다음 방 투표 시간(초). 모두 뽑았거나 남은 표로 결과가 안 바뀌면 바로 정합니다
+  vote-seconds: 20
+  # 시작의 방에서 기다릴 수 있는 시간(초). 넘으면 제한시간이 흐르기 시작합니다
+  start-max-wait: 300
+  # 열린 출구에 이만큼 가까이 가면 파티 전체가 다음 방으로(블록)
+  door-radius: 1.5
+  # 끝난 뒤 밖으로 나가기까지(초)
+  exit-delay: 10
+  # 접속이 끊긴 파티원을 기다리는 시간(초). 그 안에 들어오면 그 판으로 돌아갑니다
+  reconnect-grace: 180
+
+portal:
+  # 필드 몬스터 한 마리를 잡을 때 포탈이 생길 확률(%) — 플레이어가 잡은 것 · 자연 스폰된 것만
+  chance: 0.5
+  # 포탈이 생길 수 있는 월드. 비우면 던전 월드를 뺀 전부
+  worlds: []
+  # 한 사람이 포탈을 다시 만나기까지(초)
+  player-cooldown: 600
+  # 동시에 떠 있는 포탈 수
+  max: 5
+  # 포탈이 떠 있는 시간(초)
+  lifetime: 300
+  # 처음 이 시간(초) 동안은 발견자(와 그 파티)만 들어갈 수 있음
+  owner-seconds: 60
+  # 입구에 이만큼 가까이 가면 입장 화면(블록)
+  radius: 1.5
+
+lobby:
+  # 파티를 만들고 이 시간(초) 안에 입장하지 않으면 해체
+  timeout: 600
+  # 초대가 유효한 시간(초)
+  invite-seconds: 60
+  # 모집 공지 사이 최소 간격(초)
+  recruit-cooldown: 30
+
+# 던전 안에서 막을 명령어(관리자는 됨). 앞의 / 없이 첫 단어만. 던전에서 나가려면 /던전 나가기
+blocked-commands: [spawn, home, homes, sethome, tpa, tpahere, tpaccept, warp, warps, back, tp, tpo, rtp, wild, 야생, 스폰, 홈]
