@@ -693,9 +693,11 @@ class RunService(private val d: Dungeons) {
         player.fireTicks = 0
         player.fallDistance = 0f
         player.maxHealth()?.let { player.health = it }
-        val target = point?.location() ?: Bukkit.getWorlds().first().spawnLocation
+        // 돌아갈 월드가 없으면 그 사람 모드의 스폰(core `Realms` — 2026-10-15), 모드가 없으면 본 월드 스폰. 모드를 넘는 이동이 될 수 있어 `Realms.travel` 로.
+        val target = point?.location() ?: kr.inmc.core.integration.Realms.of(player)?.let(kr.inmc.core.integration.Realms::spawn)
+            ?: Bukkit.getWorlds().first().spawnLocation
         exiting.add(id)
-        player.teleportAsync(target).whenComplete { _, _ -> Bukkit.getScheduler().runTask(d.plugin, Runnable { exiting.remove(id) }) }
+        kr.inmc.core.integration.Realms.travel(player, target).whenComplete { _, _ -> Bukkit.getScheduler().runTask(d.plugin, Runnable { exiting.remove(id) }) }
         d.returns.forget(id)
     }
 

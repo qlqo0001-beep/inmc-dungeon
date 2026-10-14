@@ -46,6 +46,7 @@ class Lobbies(private val d: Dungeons) {
         if (target.uniqueId in lobby.members) return "party-already-member"
         if (lobby.full) return "party-full"
         if (d.runs.of(target.uniqueId) != null) return "party-target-busy"
+        if (!sameMode(lobby, target)) return "party-other-mode"
         lobby.invites[target.uniqueId] = System.currentTimeMillis() + d.config.inviteSeconds * 1000L
         d.messages.send(target, "party-invited", ph(lobby).player(name(inviter)).value(d.config.inviteSeconds.toString()))
         tell(lobby, "party-invite-sent", ph(lobby).player(name(target)))
@@ -75,12 +76,22 @@ class Lobbies(private val d: Dungeons) {
         if (lobby.full) return "party-full"
         if (d.runs.of(player.uniqueId) != null) return "already-in-run"
         if (!player.hasPermission(Dungeons.PLAY)) return "no-permission"
+        if (!sameMode(lobby, player)) return "party-other-mode"
         leave(player, quiet = true)
         lobby.members.add(player.uniqueId)
         byPlayer[player.uniqueId] = lobby
         tell(lobby, "party-joined", ph(lobby).player(name(player)).count(lobby.members.size).amount(lobby.dungeon.party.max.toString()))
         refresh(lobby)
         return null
+    }
+
+    /**
+     * 파티장과 같은 모드인가(core `Realms` — inmc-worlds, 2026-10-15). 던전 월드는 여러 모드가 빌려 쓰므로 한 판은 한 모드끼리만 —
+     * 섞이면 판 안에서 떨군 물건이 다른 모드로 넘어간다. 모드가 없으면 늘 같다.
+     */
+    private fun sameMode(lobby: Lobby, player: Player): Boolean {
+        val leader = kr.inmc.core.integration.Realms.of(lobby.leader) ?: return true
+        return leader == kr.inmc.core.integration.Realms.of(player)
     }
 
     /** 로비에서 나온다. 파티장이 나가면 다음 사람에게 넘기고, 아무도 없으면 해체. */
@@ -126,6 +137,7 @@ class Lobbies(private val d: Dungeons) {
         )
         for (player in Bukkit.getOnlinePlayers()) {
             if (d.runs.of(player.uniqueId) != null) continue
+            if (!sameMode(lobby, player)) continue
             // 모집하는 사람이 투명이면 그를 볼 수 있는 사람에게만(본인 포함 — core Vanish, 2026-10-10).
             if (!kr.inmc.core.integration.Vanish.canSee(player, by)) continue
             player.sendMessage(line)
