@@ -52,4 +52,9 @@ lobby:
   recruit-cooldown: 30
 
 # 던전 안에서 막을 명령어(관리자는 됨). 앞의 / 없이 첫 단어만. 던전에서 나가려면 /던전 나가기
-blocked-commands: [spawn, home, homes, sethome, tpa, tpahere, tpaccept, warp, warps, back, tp, tpo, rtp, wild, 야생, 스폰, 홈]
+# 친 이름뿐 아니라 그 명령의 본이름·별칭도 본다 — warp 를 적으면 같은 명령인 /워프 도 막힌다.
+# 아래 기본 목록(inmc-essentials 의 이동 명령)은 지워도 늘 막힌다 — 여기 적는 것은 그 위에 더해진다.
+blocked-commands: [spawn, home, homes, sethome, tpa, tpahere, tpaccept, warp, warps, back, tp, tpo, rtp, wild, 야생, 스폰, 홈,
+  tpto, tppos, tpaall, tpyes, dback,
+  홈목록, 홈설정, 워프, 이동, 강제이동, 좌표이동, 강제좌표이동, 이동요청, 소환요청, 전원소환요청, 수락, 뒤로, 사망지점,
+  소환, tphere]

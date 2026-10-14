@@ -40,6 +40,9 @@ class Lobbies(private val d: Dungeons) {
     /** 안 되면 메시지 키. */
     fun invite(lobby: Lobby, inviter: Player, target: Player): String? {
         if (lobby.leader != inviter.uniqueId) return "party-not-leader"
+        // 투명인 사람은 못 보는 사람에게 "접속 중이 아님" — 초대 결과·로비 알림으로 접속이 드러나지 않게(core Vanish, 2026-10-10).
+        // 명령(`/던전 파티 초대`)과 로비 화면의 [초대] 가 둘 다 여기로 온다.
+        if (!kr.inmc.core.integration.Vanish.canSee(inviter, target)) return "party-target-offline"
         if (target.uniqueId in lobby.members) return "party-already-member"
         if (lobby.full) return "party-full"
         if (d.runs.of(target.uniqueId) != null) return "party-target-busy"
@@ -123,6 +126,8 @@ class Lobbies(private val d: Dungeons) {
         )
         for (player in Bukkit.getOnlinePlayers()) {
             if (d.runs.of(player.uniqueId) != null) continue
+            // 모집하는 사람이 투명이면 그를 볼 수 있는 사람에게만(본인 포함 — core Vanish, 2026-10-10).
+            if (!kr.inmc.core.integration.Vanish.canSee(player, by)) continue
             player.sendMessage(line)
         }
         return null

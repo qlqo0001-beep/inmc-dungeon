@@ -90,6 +90,8 @@ class Portals(private val d: Dungeons) {
         if (d.world.isDungeon(at.world)) return
         if (config.portalWorlds.isNotEmpty() && at.world.name !in config.portalWorlds) return
         if (!player.hasPermission(Dungeons.PLAY) || d.runs.of(player.uniqueId) != null) return
+        // 투명인 사람 곁에는 포탈이 생기지 않는다 — 누구나 보는 포탈과 그 이름표가 그가 어디 있는지 드러낸다(core Vanish, 2026-10-10).
+        if (kr.inmc.core.integration.Vanish.isVanished(player)) return
         val now = System.currentTimeMillis()
         if ((cooldowns[player.uniqueId] ?: 0L) > now) return
         if (Math.random() * 100.0 >= config.portalChance) return
@@ -215,7 +217,10 @@ class Portals(private val d: Dungeons) {
         if (d.runs.of(player.uniqueId) != null) return
         val now = System.currentTimeMillis()
         if (now < portal.ownerUntil && player.uniqueId != portal.owner && d.lobbies.of(player.uniqueId)?.leader != portal.owner) {
-            d.messages.send(player, "portal-owner-only", Ph.of().player(portal.ownerName).value(((portal.ownerUntil - now) / 1000 + 1).toString()))
+            // 발견자가 투명이면 그를 못 보는 사람에게 이름을 내지 않는다(core Vanish, 2026-10-10).
+            val owner = Bukkit.getPlayer(portal.owner)
+            val ownerName = if (owner != null && !kr.inmc.core.integration.Vanish.canSee(player, owner)) "???" else portal.ownerName
+            d.messages.send(player, "portal-owner-only", Ph.of().player(ownerName).value(((portal.ownerUntil - now) / 1000 + 1).toString()))
             return
         }
         EntryMenu(d, player, portal.dungeon, portal.difficulty, portal.id).show()
@@ -237,7 +242,9 @@ class Portals(private val d: Dungeons) {
 
     private fun label(portal: Live, now: Long) {
         val left = Durations.formatShort((portal.expiresAt - now) / 1000)
-        val who = if (now < portal.ownerUntil) "<gray>${portal.ownerName} 님만 · ${(portal.ownerUntil - now) / 1000 + 1}초</gray>" else "<gray>누구나</gray>"
+        // 이름표는 누구나 보는 글자 디스플레이라 사람마다 다르게 못 쓴다 — 발견자가 투명이면 이름 대신 "발견자"(관리자가 세운 포탈 · 세운 뒤 투명).
+        val owner = Bukkit.getPlayer(portal.owner)?.takeIf { kr.inmc.core.integration.Vanish.isVanished(it) }?.let { "발견자" } ?: "${portal.ownerName} 님"
+        val who = if (now < portal.ownerUntil) "<gray>${owner}만 · ${(portal.ownerUntil - now) / 1000 + 1}초</gray>" else "<gray>누구나</gray>"
         portal.label?.text(Text.renderFlat("<light_purple>던전 포탈</light_purple>\n${portal.dungeon.name} <dark_gray>·</dark_gray> ${portal.difficulty.name}\n$who <dark_gray>·</dark_gray> <gray>$left</gray>"))
     }
 

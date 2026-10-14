@@ -43,16 +43,15 @@ class Schematics(private val d: Dungeons) {
     /** 저장 결과. [problems] 는 막지는 않지만 알릴 것(표지판 중복 등). */
     data class Captured(val size: Vec, val markers: Markers, val problems: List<String>)
 
-    /** 플레이어의 WorldEdit 선택(가장 작은·큰 모서리). 선택이 없거나 다른 월드면 null. */
-    fun selection(player: Player): Pair<Vec, Vec>? = runCatching {
-        val session = WorldEdit.getInstance().sessionManager.get(BukkitAdapter.adapt(player))
-        val world = session.selectionWorld ?: return null
-        if (BukkitAdapter.adapt(world) != player.world) return null
-        val region = session.getSelection(world)
-        val min = region.minimumPoint
-        val max = region.maximumPoint
-        Vec(min.x(), min.y(), min.z()) to Vec(max.x(), max.y(), max.z())
-    }.getOrNull()
+    /**
+     * 플레이어의 WorldEdit 선택(가장 작은·큰 모서리). 선택이 없거나 다른 월드면 null.
+     * 읽기만 하므로 core [kr.inmc.core.integration.Selections] 로(2026-10-10 — 다른 플러그인과 같은 길). 건축물 읽고 쓰기는 이 파일의 WorldEdit API 그대로.
+     */
+    fun selection(player: Player): Pair<Vec, Vec>? {
+        val sel = kr.inmc.core.integration.Selections.of(player) ?: return null
+        if (sel.world != player.world) return null
+        return Vec(sel.minX, sel.minY, sel.minZ) to Vec(sel.maxX, sel.maxY, sel.maxZ)
+    }
 
     /** 메인. [world] 의 상자 [min]~[max] 를 [file] 로. 끝나면 메인에서 [then](실패면 null 과 까닭). */
     fun capture(world: World, min: Vec, max: Vec, file: File, then: (Captured?, String?) -> Unit) {

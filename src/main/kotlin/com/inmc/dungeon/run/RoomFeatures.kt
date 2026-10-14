@@ -8,6 +8,7 @@ import com.inmc.dungeon.gui.BlessingMenu
 import com.inmc.dungeon.gui.ShopMenu
 import com.inmc.dungeon.integration.UrbHook
 import com.inmc.dungeon.util.Ph
+import kr.inmc.core.integration.Mail
 import kr.inmc.core.item.ItemRef
 import kr.inmc.core.item.StoredItem
 import kr.inmc.core.util.Text
@@ -24,7 +25,9 @@ import org.bukkit.entity.Entity
 import org.bukkit.entity.Interaction
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
+import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import java.util.UUID
 
 /**
  * 방 종류의 효과(사양 13절) — 들어올 때 · 떠날 때. 상호작용은 전부 **자리(station)** — 블록 디스플레이 + 글자 + 클릭 상자(저장 안 함):
@@ -41,7 +44,8 @@ import org.bukkit.persistence.PersistentDataType
  * | 비밀 | 비밀 보상 상자(`rewards.secret`, 없으면 보물 상자) |
  *
  * `[비밀]` 표시가 있는 방에는 **보이지 않는** 클릭 상자만 세운다 — 누르면 `RunService.revealSecret`.
- * 상자는 방을 떠나거나 판이 끝날 때 **안 연 사람 몫도 준다** — 보상을 잃지 않게.
+ * 상자는 방을 떠나거나 판이 끝날 때 **안 연 사람 몫도 준다** — 보상을 잃지 않게. 접속이 끊긴(유예 중) 사람 몫과 가방에 안 들어간
+ * 보스 장비는 우편으로(core [Mail], 2026-10-10) — 던전 월드는 켤 때마다 새로라 바닥에 떨군 것은 사라진다.
  */
 class RoomFeatures(private val d: Dungeons) {
 
@@ -83,8 +87,9 @@ class RoomFeatures(private val d: Dungeons) {
     fun onLeave(run: Run) {
         for (chest in run.chests.values.toList()) {
             for (id in run.members) {
-                val player = Bukkit.getPlayer(id) ?: continue
-                if (id !in chest.opened) claim(run, player, chest, auto = true)
+                if (id in chest.opened) continue
+                val player = Bukkit.getPlayer(id)
+                if (player != null) claim(run, player, chest, auto = true) else mailShare(run, id, chest)
             }
         }
         run.chests.clear()
@@ -189,26 +194,73 @@ class RoomFeatures(private val d: Dungeons) {
             if (UrbHook.grant(player, chest.box)) got = true
             else d.logger.warning("보상 상자 '${chest.box}' 을(를) 굴리지 못했습니다(inmc-urb 없음 · 상자 없음 · 꺼짐)")
         }
-        if (chest.boss) got = rollGear(run, player) || got
+        if (chest.boss) got = giveGear(run, player) || got
         if (!got) d.messages.send(player, "chest-empty")
         player.playSound(player.location, Sound.BLOCK_CHEST_OPEN, 1f, 1f)
         chest.at.world.spawnParticle(Particle.TOTEM_OF_UNDYING, chest.at.clone().add(0.0, 1.0, 0.0), 20, 0.3, 0.4, 0.3, 0.1)
         if (auto) d.messages.send(player, "chest-auto")
     }
 
-    /** 던전 장비 — 확률 × 난이도 보상 배율 × (1 + 저주 보너스 + 행운 축복). 얻은 것이 있으면 true. */
-    private fun rollGear(run: Run, player: Player): Boolean {
-        val factor = run.difficulty.rewardMultiplier * (1.0 + run.rewardBonus + d.effects.total(run, player.uniqueId, BuffStat.REWARD))
-        var any = false
+    /** 던전 장비를 굴려 [player] 에게. 가방에 안 들어간 것은 우편(창구가 없으면 발밑). 얻은 것이 있으면 true. */
+    private fun giveGear(run: Run, player: Player): Boolean {
+        val stacks = rollGear(run, player.uniqueId)
+        val overflow = ArrayList<ItemStack>()
+        for (stack in stacks) {
+            d.messages.send(player, "gear-got", Ph.of().value(Text.plain(stack.effectiveName())))
+            overflow.addAll(player.inventory.addItem(stack).values)
+        }
+        if (overflow.isNotEmpty()) {
+            if (Mail.send(player.uniqueId, d.plugin.name, source(run, gear = true), overflow)) d.messages.send(player, "gear-mailed")
+            else overflow.forEach { player.world.dropItemNaturally(player.location, it) }
+        }
+        return stacks.isNotEmpty()
+    }
+
+    /** 던전 장비 — 확률 × 난이도 보상 배율 × (1 + 저주 보너스 + 행운 축복). 굴린 것만 돌려준다(주지 않는다). */
+    private fun rollGear(run: Run, id: UUID): List<ItemStack> {
+        val factor = run.difficulty.rewardMultiplier * (1.0 + run.rewardBonus + d.effects.total(run, id, BuffStat.REWARD))
+        val stacks = ArrayList<ItemStack>()
         for (gear in run.dungeon.rewards.gear) {
             if (Math.random() * 100.0 >= gear.chance * factor) continue
-            val stack = d.resolver.create(StoredItem(ItemRef.parse(gear.item), Material.STONE), 1) ?: continue
-            player.inventory.addItem(stack).values.forEach { player.world.dropItemNaturally(player.location, it) }
-            d.messages.send(player, "gear-got", Ph.of().value(Text.plain(stack.effectiveName())))
-            any = true
+            d.resolver.create(StoredItem(ItemRef.parse(gear.item), Material.STONE), 1)?.let { stacks.add(it) }
         }
-        return any
+        return stacks
     }
+
+    /**
+     * [id] 한 사람의 안 연 상자 몫을 전부 우편으로 — 판에서 빠질 때(재접속 유예 만료 · 나가기)와 서버를 끌 때(2026-10-10).
+     * 그 뒤에는 [onLeave] 가 그 사람을 보지 않으므로(멤버가 아니거나 판이 사라진다) 여기서 안 보내면 몫이 사라진다.
+     */
+    fun settle(run: Run, id: UUID) {
+        for (chest in run.chests.values.toList()) if (id !in chest.opened) mailShare(run, id, chest)
+    }
+
+    /**
+     * 상자를 열지 못한 채 판에 없는 파티원의 몫 — 전에는 사라졌다. URB 상자는 `UrbPlugin.rollForMail`(굴려서 아이템·명령어)로,
+     * 보스면 장비도 굴려 한 통의 우편으로 보낸다. 우편 창구가 없으면 전처럼 건너뛴다. 받은 것으로 먼저 적는다(두 번 주지 않게).
+     */
+    private fun mailShare(run: Run, id: UUID, chest: Run.Chest) {
+        if (!Mail.available) return
+        chest.opened.add(id)
+        val stacks = ArrayList<ItemStack>()
+        val commands = ArrayList<String>()
+        if (chest.box.isNotEmpty()) {
+            val rolled = UrbHook.rollForMail(chest.box)
+            if (rolled != null) {
+                stacks.addAll(rolled.first)
+                commands.addAll(rolled.second)
+            } else d.logger.warning("보상 상자 '${chest.box}' 을(를) 굴리지 못했습니다(inmc-urb 없음 · 상자 없음 · 꺼짐) — 판에 없는 $id 의 몫")
+        }
+        if (chest.boss) stacks.addAll(rollGear(run, id))
+        if (stacks.isEmpty() && commands.isEmpty()) return
+        if (!Mail.send(id, d.plugin.name, source(run, gear = false), stacks, commands = commands)) {
+            d.logger.warning("판에 없는 $id 의 보상 상자 몫(아이템 ${stacks.size}개 · 명령어 ${commands.size}개)을 우편으로 보내지 못했습니다")
+        }
+    }
+
+    /** 우편에 적히는 출처 — 사람이 읽는다. */
+    private fun source(run: Run, gear: Boolean): String =
+        "던전 ${Text.plain(run.dungeon.name)} ${if (gear) "보스 장비" else "보상 상자"}"
 
     // --- 회복 · 저주 · 축복 · 제단 ------------------------------------------------------
 

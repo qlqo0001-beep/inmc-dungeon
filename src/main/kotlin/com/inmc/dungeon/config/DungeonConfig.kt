@@ -29,10 +29,21 @@ data class DungeonConfig(
 
     companion object {
 
+        // 영어 이름을 적으면 같은 명령의 한글 본이름도 막힌다(GuardListener.blocked 가 명령의 이름·별칭을 다 본다). 한글은 명령 표에서 못 찾을
+        // 때(다른 플러그인이 등록한 것 등)를 위해 적어 둔다 — inmc-essentials 의 이동 명령(계획 4절 표).
+        // 이 목록은 **늘 막힌다** — config.yml 의 blocked-commands 는 여기에 더해진다([blocked]). 예전 config.yml(한글 이름·tpto·tppos·dback 이 없던 것)
+        // 그대로 두어도 새 이동 명령으로 던전을 빠져나갈 수 없게.
         val DEFAULT_BLOCKED = setOf(
             "spawn", "home", "homes", "sethome", "tpa", "tpahere", "tpaccept", "warp", "warps",
             "back", "tp", "tpo", "rtp", "wild", "야생", "스폰", "홈",
+            "tpto", "tppos", "tpaall", "tpyes", "dback",
+            "홈목록", "홈설정", "워프", "이동", "강제이동", "좌표이동", "강제좌표이동", "이동요청", "소환요청", "전원소환요청", "수락", "뒤로", "사망지점",
+            "소환", "tphere",
         )
+
+        /** 파일의 `blocked-commands` + [DEFAULT_BLOCKED](합집합 — 기본 목록은 빼지 못한다). 앞의 `/` 를 떼고 소문자로. */
+        fun blocked(configured: List<String>): Set<String> =
+            DEFAULT_BLOCKED + configured.map { it.removePrefix("/").lowercase() }.filter { it.isNotEmpty() }
 
         fun from(yaml: YamlConfiguration): DungeonConfig {
             val d = DungeonConfig()
@@ -47,9 +58,7 @@ data class DungeonConfig(
                 doorRadius = yaml.getDouble("run.door-radius", d.doorRadius).coerceIn(0.5, 5.0),
                 exitDelay = yaml.getInt("run.exit-delay", d.exitDelay).coerceIn(0, 120),
                 reconnectGrace = yaml.getInt("run.reconnect-grace", d.reconnectGrace).coerceAtLeast(0),
-                blockedCommands = if (yaml.isList("blocked-commands")) {
-                    yaml.getStringList("blocked-commands").map { it.removePrefix("/").lowercase() }.toSet()
-                } else d.blockedCommands,
+                blockedCommands = blocked(yaml.getStringList("blocked-commands")),
                 portalChance = yaml.getDouble("portal.chance", d.portalChance).coerceIn(0.0, 100.0),
                 portalWorlds = yaml.getStringList("portal.worlds").toSet(),
                 portalCooldown = yaml.getInt("portal.player-cooldown", d.portalCooldown).coerceAtLeast(0),

@@ -703,6 +703,7 @@ class RunService(private val d: Dungeons) {
     fun leave(player: Player, teleport: Boolean = true) {
         val run = of(player.uniqueId) ?: return
         val id = player.uniqueId
+        d.features.settle(run, id) // 안 연 상자 몫은 우편으로 — 빠진 뒤에는 아무도 챙기지 않는다(2026-10-10).
         run.members.remove(id)
         run.choice?.ballot?.drop(id)
         if (teleport) sendOut(run, id) else {
@@ -797,6 +798,7 @@ class RunService(private val d: Dungeons) {
         for ((id, since) in run.offline.toList()) {
             if (now - since < d.config.reconnectGrace * 1000L) continue
             run.offline.remove(id)
+            d.features.settle(run, id) // 유예가 지났다 — 안 연 상자 몫은 우편으로(2026-10-10).
             run.members.remove(id)
             byPlayer.remove(id)
             run.downed.remove(id)
@@ -817,9 +819,10 @@ class RunService(private val d: Dungeons) {
         if (runs[run.id] === run) RunBar.update(run, now)
     }
 
-    /** 끌 때 — 모두를 그 자리에서 밖으로(워커·비동기 순간이동을 기다릴 수 없다). */
+    /** 끌 때 — 모두를 그 자리에서 밖으로(워커·비동기 순간이동을 기다릴 수 없다). 안 연 상자 몫은 접속 여부와 상관없이 우편으로. */
     fun shutdown() {
         for (run in runs.values.toList()) {
+            for (id in run.members.toList()) d.features.settle(run, id)
             MonsterAPI.get()?.killAllByTag(run.tag)
             d.holograms.clear(run)
             for (id in run.members) {

@@ -321,8 +321,9 @@ class DungeonCommand(private val d: Dungeons, private val plugin: DungeonPlugin)
             })
     }
 
-    private val onlinePlayers = SuggestionProvider<CommandSourceStack> { _, builder ->
-        Bukkit.getOnlinePlayers().forEach { builder.suggest(it.name) }
+    /** 접속자 이름 — 투명인 사람은 그를 볼 수 있는 사람에게만(core Vanish, 2026-10-10). */
+    private val onlinePlayers = SuggestionProvider<CommandSourceStack> { ctx, builder ->
+        kr.inmc.core.integration.Vanish.visibleNames(ctx.source.sender).forEach { builder.suggest(it) }
         builder.buildFuture()
     }
 

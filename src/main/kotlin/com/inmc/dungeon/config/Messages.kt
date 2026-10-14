@@ -65,6 +65,7 @@ class Messages(values: Map<String, String>) : MessageCatalog<Ph>(values, DEFAULT
             "chest-empty" to "<gray>상자가 비어 있습니다(보상 상자가 설정되지 않음).</gray>",
             "chest-auto" to "<gray>열지 않은 보상 상자의 내 몫을 받았습니다.</gray>",
             "gear-got" to "<light_purple>던전 장비</light_purple> <white>{값}</white><gray> 을(를) 얻었습니다!</gray>",
+            "gear-mailed" to "<gray>가방이 가득 차 던전 장비 일부를 우편으로 보냈습니다.</gray>",
             "rest" to "<green>회복방 — 모두의 체력과 배고픔이 회복되고 해로운 효과가 사라졌습니다.</green>",
             "cursed" to "<dark_purple>저주가 내렸습니다: {값}</dark_purple> <gray>— 대신 이번 판의 보상 +{수량}</gray>",
             "blessing-done" to "<gray>이 방에서 이미 축복을 받았습니다.</gray>",
