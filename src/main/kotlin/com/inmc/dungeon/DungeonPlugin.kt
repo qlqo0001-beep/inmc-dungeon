@@ -40,6 +40,11 @@ class DungeonPlugin : JavaPlugin() {
         manager.registerEvents(RunListener(d), this)
         manager.registerEvents(MobListener(d), this)
         manager.registerEvents(GuardListener(d), this)
+        // 모드(inmc-worlds)의 기능 토글에 난이도 해금을 올린다(core Realms, 2026-10-15).
+        kr.inmc.core.integration.Realms.register(kr.inmc.core.integration.Realms.Feature(
+            com.inmc.dungeon.player.Unlocks.FEATURE, "던전", "던전 난이도 해금", org.bukkit.Material.IRON_DOOR,
+            listOf("깬 난이도의 다음 단계 열기"),
+        ))
         manager.registerEvents(com.inmc.dungeon.listener.PortalListener(d), this)
         manager.registerEvents(kr.inmc.core.listener.MenuListener(d), this)
         DungeonCommand(d, this).register()
@@ -69,6 +74,7 @@ class DungeonPlugin : JavaPlugin() {
     }
 
     override fun onDisable() {
+        kr.inmc.core.integration.Realms.unregisterAll("던전")
         if (!::dungeons.isInitialized) return
         if (::ticker.isInitialized) ticker.stop()
         SignalCatalog.unregisterAll(RunService.SIGNAL_SOURCE)

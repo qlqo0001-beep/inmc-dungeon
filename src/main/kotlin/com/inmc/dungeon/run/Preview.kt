@@ -71,7 +71,8 @@ class Preview(private val d: Dungeons) {
             val player = org.bukkit.Bukkit.getPlayer(id) ?: continue
             val point = d.returns.get(id)
             player.gameMode = point?.gameMode ?: GameMode.SURVIVAL
-            player.teleport(point?.location() ?: org.bukkit.Bukkit.getWorlds().first().spawnLocation)
+            player.teleport(point?.location() ?: kr.inmc.core.integration.Realms.of(player)?.let(kr.inmc.core.integration.Realms::spawn)
+                ?: org.bukkit.Bukkit.getWorlds().first().spawnLocation)
             d.returns.forgetNow(id)
         }
     }

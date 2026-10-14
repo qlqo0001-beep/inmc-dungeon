@@ -834,7 +834,9 @@ class RunService(private val d: Dungeons) {
                 d.tempItems.purge(player)
                 val point = d.returns.get(id)
                 player.gameMode = point?.gameMode ?: GameMode.SURVIVAL
-                player.teleport(point?.location() ?: Bukkit.getWorlds().first().spawnLocation)
+                // 돌아갈 월드가 없으면 그 사람 모드의 스폰(core `Realms`) — 본 월드가 다른 모드면 모드 공급처가 막는다.
+                player.teleport(point?.location() ?: kr.inmc.core.integration.Realms.of(player)?.let(kr.inmc.core.integration.Realms::spawn)
+                    ?: Bukkit.getWorlds().first().spawnLocation)
                 d.returns.forgetNow(id)
             }
         }

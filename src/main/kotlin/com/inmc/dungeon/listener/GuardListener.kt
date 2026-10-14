@@ -60,6 +60,15 @@ class GuardListener(private val d: Dungeons) : Listener {
             event.isCancelled = true
             return
         }
+        // 판에 없는 사람이 다른 길(이동 요청·워프·/tp)로 던전 월드에 들어온다 — 막는다(관리자 빼고). 던전 월드는 여러 모드가 빌려 쓰는 월드라
+        // 남이 들어오면 판 안의 물건이 모드를 넘는다(core `Realms` — inmc-worlds, 2026-10-15). 판에 든 사람은 시작할 때 이미 판에 적혀 있다.
+        if (d.world.isDungeon(event.to.world) && !d.world.isDungeon(event.from.world) &&
+            d.runs.of(player.uniqueId) == null && !player.hasPermission(Dungeons.ADMIN)
+        ) {
+            event.isCancelled = true
+            d.messages.send(player, "blocked")
+            return
+        }
         // 던전 월드를 다른 길로 떠난다 — 판에서 뺀다(이미 가는 중이니 순간이동은 하지 않는다).
         if (!d.world.isDungeon(event.from.world) || d.world.isDungeon(event.to.world)) return
         if (d.runs.isExiting(player.uniqueId)) return
